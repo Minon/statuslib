@@ -45,7 +45,7 @@ statusTracker.HandleActionPacket = function(e)
     end
 
     local relevantTarget = statusHelpers.GetIsMob(action.UserIndex) and statusHelpers.GetIsValidMob(action.UserIndex);
-
+    
     local now = os.time()
 
     local partyMemberIds = statusHelpers.GetPartyMemberIds();
@@ -58,70 +58,78 @@ statusTracker.HandleActionPacket = function(e)
             -- Set up our state
             local spell = action.Param
             local message = ability.Message
-            if (statusTracker.trackedEntities[target.Id] == nil) then
-                statusTracker.trackedEntities[target.Id] = T{};
-            end
-            
-            -- Bio and Dia
-            if action.Type == 4 and spellDamageMes:contains(message) then
-                local expiry = nil
 
-                if spell == 23 or spell == 33 or spell == 230 then
-                    expiry = now + 60
-                elseif spell == 24 or spell == 231 then
-                    expiry = now + 120
-                elseif spell == 25 or spell == 232 then
-                    expiry = now + 150
+            -- esuna/dispel clear
+            if (message == 64 or message == 342) then 
+                if (statusTracker.trackedEntities[target.Id] ~= nil) then
+                    statusTracker.trackedEntities[target.Id][ability.Param] = nil;
                 end
-
-                if spell == 23 or spell == 24 or spell == 25 or spell == 33 then
-                    statusTracker.trackedEntities[target.Id][134] = expiry
-                    statusTracker.trackedEntities[target.Id][135] = nil
-                elseif spell == 230 or spell == 231 or spell == 232 then
-                    statusTracker.trackedEntities[target.Id][134] = nil
-                    statusTracker.trackedEntities[target.Id][135] = expiry
+            else
+                if (statusTracker.trackedEntities[target.Id] == nil) then
+                    statusTracker.trackedEntities[target.Id] = T{};
                 end
+                
+                -- Bio and Dia
+                if action.Type == 4 and spellDamageMes:contains(message) then
+                    local expiry = nil
 
-            elseif statusOnMes:contains(message) then
-                -- Regular debuffs
-                local buffId = ability.Param or (action.Type == 4 and statusTable.GetBuffIdBySpellId(spell) or nil);
-                if (buffId == nil) then
-                    return
-                end
+                    if spell == 23 or spell == 33 or spell == 230 then
+                        expiry = now + 60
+                    elseif spell == 24 or spell == 231 then
+                        expiry = now + 120
+                    elseif spell == 25 or spell == 232 then
+                        expiry = now + 150
+                    end
 
-                if spell == 58 or spell == 80 then -- para/para2
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 56 or spell == 79 then -- slow/slow2
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 180
-                elseif spell == 216 then -- gravity
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 254 or spell == 276 then -- blind/blind2
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 180
-                elseif spell == 59 or spell == 359 then -- silence/ga
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 253 or spell == 259 or spell == 273 or spell == 274 then -- sleep/2/ga/2
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 90
-                elseif spell == 258 or spell == 362 then -- bind
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 60
-                elseif spell == 252 then -- stun
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 5
-                elseif spell <= 229 and spell >= 220 then -- poison/2
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                -- Elemental debuffs
-                elseif spell == 239 then -- shock
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 238 then -- rasp
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 237 then -- choke
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 236 then -- frost
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 235 then -- burn
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                elseif spell == 240 then -- drown
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 120
-                else                                        -- Handle unknown status effect @ 5 minutes
-                    statusTracker.trackedEntities[target.Id][buffId] = now + 300;
+                    if spell == 23 or spell == 24 or spell == 25 or spell == 33 then
+                        statusTracker.trackedEntities[target.Id][134] = expiry
+                        statusTracker.trackedEntities[target.Id][135] = nil
+                    elseif spell == 230 or spell == 231 or spell == 232 then
+                        statusTracker.trackedEntities[target.Id][134] = nil
+                        statusTracker.trackedEntities[target.Id][135] = expiry
+                    end
+                    
+                elseif statusOnMes:contains(message) then
+                    -- Regular debuffs
+                    local buffId = ability.Param or (action.Type == 4 and statusTable.GetBuffIdBySpellId(spell) or nil);
+                    if (buffId == nil) then
+                        return
+                    end
+
+                    if spell == 58 or spell == 80 then -- para/para2
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 56 or spell == 79 then -- slow/slow2
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 180
+                    elseif spell == 216 then -- gravity
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 254 or spell == 276 then -- blind/blind2
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 180
+                    elseif spell == 59 or spell == 359 then -- silence/ga
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 98 or spell == 253 or spell == 259 or spell == 273 or spell == 274 then -- repose/sleep/2/ga/2
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 90
+                    elseif spell == 258 or spell == 362 then -- bind
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 60
+                    elseif spell == 252 then -- stun
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 5
+                    elseif spell <= 229 and spell >= 220 then -- poison/2
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    -- Elemental debuffs
+                    elseif spell == 239 then -- shock
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 238 then -- rasp
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 237 then -- choke
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 236 then -- frost
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 235 then -- burn
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    elseif spell == 240 then -- drown
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 120
+                    else                                        -- Handle unknown status effect @ 5 minutes
+                        statusTracker.trackedEntities[target.Id][buffId] = now + 300;
+                    end
                 end
             end
         end
@@ -214,7 +222,7 @@ statusTracker.HandleClearMessage = function(e)
         end
 
         -- Clear the buffid that just wore off
-        if (e.param ~= nil) then
+        if (parsedPacket.param ~= nil) then
             statusTracker.trackedEntities[parsedPacket.target][parsedPacket.param] = nil;
         end
     end
@@ -235,8 +243,8 @@ statusTracker.GetStatusEffects = function(serverId)
         return FilterPlayerBuffs(AshitaCore:GetMemoryManager():GetPlayer():GetBuffs());
     end
 
-    -- If this is a party member just return the party member
-    if (statusHelpers.GetPartyMemberIds():contains(serverId)) then
+    -- If this is a player party member just return the party member
+    if (statusHelpers.GetPartyMemberIds():contains(serverId) and serverId < 0x1000000) then
         return statusTracker.partyBuffs[serverId];
     end
 
